@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword, createSession, setSessionCookie, logActivity } from '@/lib/auth';
+import { getClientIP } from '@/lib/utils';
 
 export async function POST(request: NextRequest) {
     try {
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
             userId: user.id,
             action: 'LOGIN',
             details: { method: 'password' },
-            ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+            ipAddress: getClientIP(request.headers),
             userAgent: request.headers.get('user-agent') || undefined
         });
 

@@ -1,7 +1,8 @@
 // src/app/api/sessions/[id]/scan/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { SessionService } from '@/services/sessionService';
-import { getErrorMessage } from '@/lib/utils';
+import { getErrorMessage, getClientIP } from '@/lib/utils';
+import { getSession, logActivity } from '@/lib/auth';
 import type { ScanRequest } from '@/types/api';
 
 export async function POST(
@@ -20,7 +21,30 @@ export async function POST(
             );
         }
 
-        const result = await SessionService.scanItem(sessionId, trackingId);
+        const sessionData = await getSession();
+        if (!sessionData) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const result = await SessionService.scanItem(sessionId, trackingId, sessionData.userId);
+
+        // Log activity if scanning was attempted (even if invalid/duplicate, but primarily interested in SUCCESS for log clutter)
+        // Only log SUCCESS to avoid cluttering logs with every typo/duplicate scan if desired, 
+        // but the request was "action ada yang belum muncul lognya", so let's log SUCCESS/DUPLICATE at least.
+        if (result.status === 'SUCCESS' || result.status === 'DUPLICATE') {
+            await logActivity({
+                userId: sessionData.userId,
+                action: 'SCAN_ITEM',
+                details: {
+                    sessionId,
+                    trackingId,
+                    status: result.status,
+                    itemName: result.item?.productName
+                },
+                ipAddress: getClientIP(req.headers)
+            });
+        }
+
         return NextResponse.json(result);
     } catch (error: unknown) {
         return NextResponse.json(

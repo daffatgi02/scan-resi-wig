@@ -1,6 +1,7 @@
 // src/app/api/auth/logout/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, clearSession, logActivity } from '@/lib/auth';
+import { getClientIP } from '@/lib/utils';
 
 export async function POST(request: NextRequest) {
     try {
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
             await logActivity({
                 userId: session.userId,
                 action: 'LOGOUT',
-                ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+                ipAddress: getClientIP(request.headers),
                 userAgent: request.headers.get('user-agent') || undefined
             });
         }

@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import styles from './login.module.css';
 import { PackageSearch, User, Lock, LogIn, Loader2, AlertCircle } from 'lucide-react';
 
@@ -24,18 +25,28 @@ export default function LoginPage() {
         }
     }, [user, authLoading, router]);
 
+    const { success, error: toastError } = useToast();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
-        const result = await login(username, password);
+        try {
+            const result = await login(username, password);
 
-        if (!result.success) {
-            setError(result.error || 'Login gagal');
+            if (!result.success) {
+                const msg = result.error || 'Username atau password salah';
+                setError(msg);
+                toastError(msg, 'Gagal Masuk');
+                setLoading(false);
+            } else {
+                success('Selamat datang kembali!', 'Login Berhasil');
+            }
+        } catch (e) {
+            toastError('Terjadi kesalahan pada server', 'Kesalahan Sistem');
             setLoading(false);
         }
-        // If success, useEffect will handle redirect
     };
 
     if (authLoading) {

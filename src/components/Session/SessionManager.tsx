@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import styles from './SessionManager.module.css';
 import { Upload, Plus, FileSpreadsheet, ChevronRight, Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useToast } from '@/contexts/ToastContext';
 
 interface SessionManagerProps {
     onSessionSelected: (sessionId: string) => void;
@@ -28,6 +29,8 @@ export default function SessionManager({ onSessionSelected }: SessionManagerProp
         fetchSessions();
     }, []);
 
+    const { success, error: toastError } = useToast();
+
     const handleCreateSession = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!sessionName || !file) return;
@@ -48,13 +51,14 @@ export default function SessionManager({ onSessionSelected }: SessionManagerProp
                 setSessionName('');
                 setFile(null);
                 await fetchSessions();
+                success(`Sesi "${sessionName}" berhasil dibuat dengan ${newSession._count.items} paket.`, 'Sesi Dibuat');
                 onSessionSelected(newSession.id);
             } else {
                 const err = await res.json();
-                alert(err.error || 'Failed to create session');
+                toastError(err.error || 'Gagal membuat sesi', 'Gagal');
             }
         } catch (e) {
-            alert('Internal Server Error');
+            toastError('Terjadi kesalahan internal server', 'Kesalahan Sistem');
         } finally {
             setLoading(false);
         }

@@ -20,6 +20,7 @@ import { clsx } from 'clsx';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useToast } from '@/contexts/ToastContext';
 
 interface SessionItem {
     id: string;
@@ -51,6 +52,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
     const [filter, setFilter] = useState<'all' | 'scanned' | 'unscanned'>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [autoRefresh, setAutoRefresh] = useState(false);
+    const { success, error: toastError, info } = useToast();
 
     useEffect(() => {
         fetchSession();
@@ -120,6 +122,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
         XLSX.utils.book_append_sheet(wb, ws2, 'Hilang-Tertinggal');
 
         XLSX.writeFile(wb, `Rekonsiliasi_${session.name}_${new Date().toISOString().split('T')[0]}.xlsx`);
+        success('Laporan Excel berhasil diunduh', 'Export Berhasil');
     };
 
     const exportToPDF = () => {
@@ -176,6 +179,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
         });
 
         doc.save(`Rekonsiliasi_${session.name}_${new Date().toISOString().split('T')[0]}.pdf`);
+        success('Laporan PDF berhasil diunduh', 'Export Berhasil');
     };
 
     if (loading) {

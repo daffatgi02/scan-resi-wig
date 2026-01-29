@@ -5,6 +5,7 @@ import { Html5QrcodeScanner } from 'html5-qrcode';
 import styles from './Scanner.module.css';
 import { CheckCircle2, AlertCircle, Loader2, Camera } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useToast } from '@/contexts/ToastContext';
 
 interface ScannerProps {
     sessionId: string;
@@ -53,6 +54,8 @@ export default function Scanner({ sessionId, onScanResult }: ScannerProps) {
         } catch (e) { }
     };
 
+    const { success, error: toastError, warning } = useToast();
+
     async function onScan(decodedText: string) {
         if (status === 'SCANNING') return;
 
@@ -72,20 +75,25 @@ export default function Scanner({ sessionId, onScanResult }: ScannerProps) {
                 if (result.status === 'SUCCESS') {
                     setStatus('SUCCESS');
                     playSound('success');
+                    success(`Paket ${decodedText} berhasil discan`, 'Scan Berhasil');
                     onScanResult();
                 } else if (result.status === 'DUPLICATE') {
                     setStatus('WARNING');
                     setErrorMsg(result.message);
                     playSound('warning');
+                    warning(result.message || 'Paket sudah pernah discan', 'Sudah Discan');
                 } else {
                     setStatus('ERROR');
                     setErrorMsg(result.message);
                     playSound('error');
+                    toastError(result.message || 'Paket tidak terdaftar', 'Gagal');
                 }
 
                 setTimeout(() => setStatus('IDLE'), 3000);
             } else {
-                throw new Error(result.error || 'Scan failed');
+                const msg = result.error || 'Gagal memproses scan';
+                toastError(msg, 'Kesalahan');
+                throw new Error(msg);
             }
         } catch (err: any) {
             setStatus('ERROR');

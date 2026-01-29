@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import Modal from '@/components/Modal/Modal';
+import { useToast } from '@/contexts/ToastContext';
 
 interface User {
     id: string;
@@ -50,6 +51,7 @@ export default function UsersPage() {
         role: 'ADMIN' as 'ADMIN' | 'WAREHOUSE' | 'SUPER_ADMIN'
     });
     const [saving, setSaving] = useState(false);
+    const { success, error: toastError } = useToast();
 
     useEffect(() => {
         fetchUsers();
@@ -119,12 +121,13 @@ export default function UsersPage() {
             if (res.ok) {
                 setShowModal(false);
                 fetchUsers();
+                success(editingUser ? 'User berhasil diperbarui' : 'User baru berhasil dibuat', 'Berhasil');
             } else {
                 const err = await res.json();
-                alert(err.error || 'Gagal menyimpan user');
+                toastError(err.error || 'Gagal menyimpan user', 'Gagal');
             }
         } catch (error) {
-            alert('Terjadi kesalahan');
+            toastError('Terjadi kesalahan pada server', 'Kesalahan');
         } finally {
             setSaving(false);
         }
@@ -143,11 +146,12 @@ export default function UsersPage() {
 
             if (res.ok) {
                 fetchUsers();
+                success(`User "${user.name}" berhasil ${user.isActive ? 'dinonaktifkan' : 'diaktifkan'}`, 'Status Berhasil Diubah');
             } else {
-                alert('Gagal mengubah status user');
+                toastError('Gagal mengubah status user', 'Gagal');
             }
         } catch (error) {
-            alert('Terjadi kesalahan');
+            toastError('Terjadi kesalahan pada server', 'Kesalahan');
         }
     };
 

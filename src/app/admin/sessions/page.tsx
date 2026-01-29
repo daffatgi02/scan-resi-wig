@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import Modal from '@/components/Modal/Modal';
+import { useToast } from '@/contexts/ToastContext';
 
 interface Session {
     id: string;
@@ -53,6 +54,8 @@ export default function SessionsPage() {
         }
     };
 
+    const { success, error: toastError } = useToast();
+
     const handleCreateSession = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!sessionName || !file) return;
@@ -69,16 +72,18 @@ export default function SessionsPage() {
             });
 
             if (res.ok) {
+                const newSession = await res.json();
                 setShowCreateModal(false);
                 setSessionName('');
                 setFile(null);
                 fetchSessions();
+                success(`Sesi "${sessionName}" berhasil dibuat dengan ${newSession._count.items} paket.`, 'Sesi Berhasil');
             } else {
                 const err = await res.json();
-                alert(err.error || 'Gagal membuat sesi');
+                toastError(err.error || 'Gagal membuat sesi', 'Gagal');
             }
         } catch (error) {
-            alert('Terjadi kesalahan server');
+            toastError('Terjadi kesalahan pada server', 'Kesalahan Sistem');
         } finally {
             setCreating(false);
         }
