@@ -64,7 +64,7 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
     const fileInputRef = useRef<HTMLInputElement>(null);
     const cameraRef = useRef<HTMLDivElement>(null);
     const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
-    const scanCooldownRef = useRef<boolean>(false);
+    const isProcessingRef = useRef<boolean>(false);
     const isMountedRef = useRef(true);
 
     const [session, setSession] = useState<SessionDetail | null>(null);
@@ -175,12 +175,16 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
             await html5QrCodeRef.current.start(
                 backCamera?.id || cameras[0].id,
                 { fps: 20, qrbox: { width: 260, height: 260 }, aspectRatio: 1.0 },
-                (decodedText) => {
-                    if (!scanCooldownRef.current) {
-                        scanCooldownRef.current = true;
-                        handleScan(decodedText);
-                        setTimeout(() => { scanCooldownRef.current = false; }, 2000);
+                async (decodedText) => {
+                    if (isProcessingRef.current) return;
+                    isProcessingRef.current = true;
+
+                    // Pause scanning immediately to prevent double scan
+                    if (html5QrCodeRef.current) {
+                        try { await html5QrCodeRef.current.pause(); } catch (e) { }
                     }
+
+                    handleScan(decodedText);
                 },
                 () => { }
             );
@@ -237,9 +241,16 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
         setFeedbackTrackingId(trackingId);
         if (type) playSound(type);
 
-        setTimeout(() => {
+        setTimeout(async () => {
             if (isMountedRef.current) {
                 setFeedback(null);
+
+                // Resume scanning and release lock
+                if (html5QrCodeRef.current && scanMode === 'camera') {
+                    try { await html5QrCodeRef.current.resume(); } catch (e) { }
+                }
+                isProcessingRef.current = false;
+
                 if (scanMode === 'manual') inputRef.current?.focus();
             }
         }, type === 'SUCCESS' ? 1200 : 2000);
