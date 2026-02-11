@@ -110,7 +110,18 @@ export class SessionService {
     static async getSession(sessionId: string) {
         const session = await prisma.scanningSession.findUnique({
             where: { id: sessionId },
-            select: { id: true, name: true, isActive: true }
+            select: {
+                id: true,
+                name: true,
+                isActive: true,
+                createdAt: true,
+                items: {
+                    orderBy: [{ status: 'asc' }, { scannedAt: 'desc' }],
+                    include: {
+                        scannedBy: { select: { name: true } }
+                    }
+                }
+            }
         });
 
         if (!session) return null;
