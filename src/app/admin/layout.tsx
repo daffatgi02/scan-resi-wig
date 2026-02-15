@@ -2,12 +2,12 @@
 
 /* src/app/admin/layout.tsx */
 import React from 'react';
-import { LayoutDashboard, FolderOpen } from 'lucide-react';
+import { DashboardSquare02Icon, FolderOpenIcon } from 'hugeicons-react';
 import DashboardShell from '@/components/Dashboard/DashboardShell';
 
 const navItems = [
-    { href: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
-    { href: '/admin/sessions', icon: FolderOpen, label: 'Sesi Scanning', exact: false },
+    { href: '/admin', icon: DashboardSquare02Icon, label: 'Dashboard', exact: true },
+    { href: '/admin/sessions', icon: FolderOpenIcon, label: 'Sesi Scanning', exact: false },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

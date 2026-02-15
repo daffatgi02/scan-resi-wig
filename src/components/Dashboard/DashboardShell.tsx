@@ -5,15 +5,16 @@ import React, { useState } from 'react';
 import Sidebar from '@/components/Sidebar/Sidebar';
 import styles from '@/components/Sidebar/Sidebar.module.css';
 import { useRequireAuth } from '@/contexts/AuthContext';
-import { Loader2, LucideIcon, Menu, X } from 'lucide-react';
+import { Loading03Icon, Menu01Icon, Cancel01Icon } from 'hugeicons-react';
 import Image from 'next/image';
 import logoImg from '@/assets/Logo WIG.png';
 import { clsx } from 'clsx';
+import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 
 interface NavItem {
     href: string;
-    icon: LucideIcon;
+    icon: React.ElementType;
     label: string;
     exact?: boolean;
 }
@@ -45,7 +46,7 @@ export default function DashboardShell({
         return (
             <div className={styles.loadingContainer}>
                 <div className={styles.loading}>
-                    <Loader2 size={32} className={styles.spin} />
+                    <Loading03Icon size={32} className={styles.spin} />
                     <p style={{ marginTop: 16 }}>Memuat...</p>
                 </div>
             </div>
@@ -61,6 +62,7 @@ export default function DashboardShell({
             className={styles.adminLayout}
             style={{ "--sidebar-width": isCollapsed ? "80px" : "280px" } as React.CSSProperties}
         >
+
             {/* Mobile Header */}
             <header className={styles.mobileHeader}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -83,7 +85,7 @@ export default function DashboardShell({
                     onClick={() => setShowMobileMenu(!showMobileMenu)}
                     className={styles.mobileCloseBtn}
                 >
-                    {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
+                    {showMobileMenu ? <Cancel01Icon size={20} /> : <Menu01Icon size={20} />}
                 </button>
             </header>
 
@@ -92,7 +94,7 @@ export default function DashboardShell({
                 <div className={styles.sidebarOverlay} onClick={() => setShowMobileMenu(false)} />
             )}
 
-            <div className={clsx(showMobileMenu && styles.sidebarOpenMobile)}>
+            <div className={cn(showMobileMenu && styles.sidebarOpenMobile)}>
                 <Sidebar
                     navItems={navItems}
                     roleLabel={roleLabel}

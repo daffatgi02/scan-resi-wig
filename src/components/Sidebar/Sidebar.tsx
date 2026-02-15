@@ -10,15 +10,14 @@ import styles from './Sidebar.module.css';
 import { clsx } from 'clsx';
 import logoImg from '@/assets/Logo WIG.png';
 import {
-    ChevronLeft,
-    ChevronRight,
-    LogOut,
-    LucideIcon
-} from 'lucide-react';
+    ArrowLeft01Icon,
+    ArrowRight01Icon,
+    Logout02Icon
+} from 'hugeicons-react';
 
 interface NavItem {
     href: string;
-    icon: LucideIcon;
+    icon: React.ElementType;
     label: string;
     exact?: boolean;
 }
@@ -55,15 +54,17 @@ export default function Sidebar({ navItems, roleLabel, isCollapsed, onToggle }: 
 
     return (
         <aside className={clsx(styles.sidebar, isCollapsed && styles.sidebarCollapsed)}>
-            {!isCollapsed && (
-                <button
-                    className={styles.toggleBtn}
-                    onClick={() => onToggle(!isCollapsed)}
-                    aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-                >
-                    {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-                </button>
-            )}
+            <button
+                className={styles.toggleBtn}
+                onClick={() => onToggle(!isCollapsed)}
+                aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                style={{
+                    left: isCollapsed ? '64px' : 'auto',
+                    right: !isCollapsed ? '-16px' : 'auto'
+                }}
+            >
+                {isCollapsed ? <ArrowRight01Icon size={16} /> : <ArrowLeft01Icon size={16} />}
+            </button>
 
             <div className={styles.sidebarHeader}>
                 <div className={styles.logo}>
@@ -83,7 +84,8 @@ export default function Sidebar({ navItems, roleLabel, isCollapsed, onToggle }: 
                         href={item.href}
                         className={clsx(
                             styles.navItem,
-                            isActive(item.href, item.exact) && styles.navItemActive
+                            isActive(item.href, item.exact) && styles.navItemActive,
+                            isCollapsed && "justify-center px-0"
                         )}
                         title={isCollapsed ? item.label : ""}
                     >
@@ -105,7 +107,7 @@ export default function Sidebar({ navItems, roleLabel, isCollapsed, onToggle }: 
                                 <div className={styles.userRole}>{roleLabel}</div>
                             </div>
                             <button onClick={logout} className={styles.logoutBtn} title="Logout">
-                                <LogOut size={18} />
+                                <Logout02Icon size={18} />
                             </button>
                         </>
                     )}

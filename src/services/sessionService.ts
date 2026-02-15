@@ -255,8 +255,61 @@ export class SessionService {
     }
 
     // ========================================
-    // Reports
+    // Dashboard & Reports
     // ========================================
+
+    /**
+     * Get aggregated statistics for the warehouse dashboard
+     */
+    static async getDashboardStats() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const [totalSessions, totalScannedToday, activeSessions] = await Promise.all([
+            prisma.scanningSession.count({
+                where: { createdAt: { gte: today } }
+            }),
+            prisma.sessionItem.count({
+                where: {
+                    status: 'SCANNED',
+                    scannedAt: { gte: today }
+                }
+            }),
+            prisma.scanningSession.count({
+                where: { isActive: true }
+            })
+        ]);
+
+        // Get total items for progress calculation
+        const totalItems = await prisma.sessionItem.count();
+        const totalScanned = await prisma.sessionItem.count({
+            where: { status: 'SCANNED' }
+        });
+
+        const overallProgress = totalItems > 0 ? (totalScanned / totalItems) * 100 : 0;
+
+        return {
+            totalSessions,
+            totalScannedToday,
+            activeSessions,
+            overallProgress: Math.round(overallProgress)
+        };
+    }
+
+    /**
+     * Get recent scan activity across all sessions
+     */
+    static async getRecentActivity(limit = 10) {
+        return prisma.sessionItem.findMany({
+            where: { status: 'SCANNED' },
+            orderBy: { scannedAt: 'desc' },
+            take: limit,
+            include: {
+                session: { select: { name: true } },
+                scannedBy: { select: { name: true } }
+            }
+        });
+    }
 
     /**
      * Get items for reconciliation report

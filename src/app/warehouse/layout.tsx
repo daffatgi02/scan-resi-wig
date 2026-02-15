@@ -4,7 +4,7 @@
 import React from 'react';
 import { useRequireAuth, useAuth } from '@/contexts/AuthContext';
 import styles from './warehouse.module.css';
-import { PackageCheck, LogOut, Loader2 } from 'lucide-react';
+import { PackageDeliveredIcon, Logout02Icon, Loading03Icon } from 'hugeicons-react';
 
 export default function WarehouseLayout({ children }: { children: React.ReactNode }) {
     const { user, loading, isAuthorized } = useRequireAuth(['WAREHOUSE', 'SUPER_ADMIN']);
@@ -14,7 +14,7 @@ export default function WarehouseLayout({ children }: { children: React.ReactNod
         return (
             <div className={styles.warehouseLayout}>
                 <div className={styles.centerScreen}>
-                    <Loader2 size={48} className={styles.spin} style={{ color: 'var(--primary)' }} />
+                    <Loading03Icon size={48} className={styles.spin} style={{ color: 'var(--primary)' }} />
                     <p style={{ fontWeight: 600, color: 'var(--text-dim)' }}>Menautkan Sesi...</p>
                 </div>
             </div>
@@ -30,7 +30,7 @@ export default function WarehouseLayout({ children }: { children: React.ReactNod
             <header className={styles.header}>
                 <div className={styles.logo}>
                     <div className={styles.logoIcon}>
-                        <PackageCheck size={22} color="white" />
+                        <PackageDeliveredIcon size={22} color="white" />
                     </div>
                     <div>
                         <span className={styles.logoText}>Wijaya Tracking</span>
@@ -47,7 +47,7 @@ export default function WarehouseLayout({ children }: { children: React.ReactNod
                         {user?.name.charAt(0).toUpperCase()}
                     </div>
                     <button onClick={logout} className={styles.logoutButton} title="Logout">
-                        <LogOut size={18} />
+                        <Logout02Icon size={18} />
                     </button>
                 </div>
             </header>

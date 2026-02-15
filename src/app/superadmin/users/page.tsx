@@ -2,23 +2,53 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import styles from '../../admin/admin.module.css';
+import Link from 'next/link';
 import {
-    Plus,
-    Users,
-    Edit2,
-    Trash2,
-    X,
-    Loader2,
-    UserCheck,
-    UserX,
-    Shield,
-    Warehouse,
-    User as UserIcon
-} from 'lucide-react';
-import { clsx } from 'clsx';
-import Modal from '@/components/Modal/Modal';
-import { useToast } from '@/contexts/ToastContext';
+    Add01Icon,
+    UserGroupIcon,
+    PencilEdit02Icon,
+    Delete02Icon,
+    Cancel01Icon,
+    Loading03Icon,
+    UserCheck01Icon,
+    UserBlock01Icon,
+    SecurityCheckIcon,
+    ArrowLeft01Icon,
+    Store01Icon,
+    UserIcon,
+    Search01Icon
+} from 'hugeicons-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+    Card,
+    CardContent
+} from '@/components/ui/card';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter
+} from '@/components/ui/dialog';
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious
+} from '@/components/ui/pagination';
+import { toast } from 'sonner';
 
 interface User {
     id: string;
@@ -34,9 +64,9 @@ interface User {
 }
 
 const roleLabels = {
-    ADMIN: { label: 'Admin', icon: UserIcon, color: 'badgeInfo' },
-    WAREHOUSE: { label: 'Warehouse', icon: Warehouse, color: 'badgeSuccess' },
-    SUPER_ADMIN: { label: 'Super Admin', icon: Shield, color: 'badgeDanger' }
+    ADMIN: { label: 'Admin', icon: UserIcon, color: 'bg-blue-100 text-blue-700' },
+    WAREHOUSE: { label: 'Warehouse', icon: Store01Icon, color: 'bg-green-100 text-green-700' },
+    SUPER_ADMIN: { label: 'Super Admin', icon: SecurityCheckIcon, color: 'bg-red-100 text-red-700' }
 };
 
 export default function UsersPage() {
@@ -51,7 +81,11 @@ export default function UsersPage() {
         role: 'ADMIN' as 'ADMIN' | 'WAREHOUSE' | 'SUPER_ADMIN'
     });
     const [saving, setSaving] = useState(false);
-    const { success, error: toastError } = useToast();
+
+    // Pagination & Search
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchQuery, setSearchQuery] = useState('');
+    const itemsPerPage = 10;
 
     useEffect(() => {
         fetchUsers();
@@ -65,6 +99,7 @@ export default function UsersPage() {
             }
         } catch (error) {
             console.error('Failed to fetch users:', error);
+            toast.error("Gagal memuat data user");
         } finally {
             setLoading(false);
         }
@@ -95,12 +130,7 @@ export default function UsersPage() {
             const url = editingUser ? `/api/users/${editingUser.id}` : '/api/users';
             const method = editingUser ? 'PUT' : 'POST';
 
-            const body: {
-                name: string;
-                role: string;
-                username?: string;
-                password?: string;
-            } = {
+            const body: any = {
                 name: formData.name,
                 role: formData.role
             };
@@ -121,13 +151,13 @@ export default function UsersPage() {
             if (res.ok) {
                 setShowModal(false);
                 fetchUsers();
-                success(editingUser ? 'User berhasil diperbarui' : 'User baru berhasil dibuat', 'Berhasil');
+                toast.success(editingUser ? 'User berhasil diperbarui' : 'User baru berhasil dibuat');
             } else {
                 const err = await res.json();
-                toastError(err.error || 'Gagal menyimpan user', 'Gagal');
+                toast.error(err.error || 'Gagal menyimpan user');
             }
         } catch (error) {
-            toastError('Terjadi kesalahan pada server', 'Kesalahan');
+            toast.error('Terjadi kesalahan pada server');
         } finally {
             setSaving(false);
         }
@@ -146,245 +176,295 @@ export default function UsersPage() {
 
             if (res.ok) {
                 fetchUsers();
-                success(`User "${user.name}" berhasil ${user.isActive ? 'dinonaktifkan' : 'diaktifkan'}`, 'Status Berhasil Diubah');
+                toast.success(`User "${user.name}" berhasil ${user.isActive ? 'dinonaktifkan' : 'diaktifkan'}`);
             } else {
-                toastError('Gagal mengubah status user', 'Gagal');
+                toast.error('Gagal mengubah status user');
             }
         } catch (error) {
-            toastError('Terjadi kesalahan pada server', 'Kesalahan');
+            toast.error('Terjadi kesalahan pada server');
         }
     };
 
+    // Filter & Pagination Logic
+    const filteredUsers = users.filter(user =>
+        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.username.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+    const paginatedUsers = filteredUsers.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
     if (loading) {
         return (
-            <div className={styles.loading}>
-                <Loader2 size={32} className={styles.spin} />
-                <p style={{ marginTop: 16 }}>Memuat user...</p>
+            <div className="flex flex-col items-center justify-center h-[50vh]">
+                <Loading03Icon size={48} className="animate-spin text-primary" />
+                <p className="mt-4 text-muted-foreground">Memuat user...</p>
             </div>
         );
     }
 
     return (
-        <>
-            <header className={styles.header}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div className="space-y-6">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <Link href="/superadmin">
+                        <Button variant="outline" size="icon" className="rounded-full h-10 w-10">
+                            <ArrowLeft01Icon size={18} />
+                        </Button>
+                    </Link>
                     <div>
-                        <h1 className={styles.pageTitle}>User Management</h1>
-                        <p className={styles.pageSubtitle}>Kelola akun pengguna sistem</p>
+                        <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+                        <p className="text-muted-foreground">Kelola akun pengguna sistem</p>
                     </div>
-                    <button
-                        className={clsx(styles.button, styles.buttonPrimary)}
-                        onClick={openCreateModal}
-                    >
-                        <Plus size={18} />
-                        Tambah User
-                    </button>
                 </div>
+                <Button onClick={openCreateModal}>
+                    <Add01Icon size={18} className="mr-2" />
+                    Tambah User
+                </Button>
             </header>
 
             {/* Stats */}
-            <div className={styles.statsGrid} style={{ marginBottom: 24 }}>
-                <div className={styles.statCard}>
-                    <div className={clsx(styles.statIcon, styles.statIconBlue)}>
-                        <Users size={24} />
-                    </div>
-                    <div className={styles.statContent}>
-                        <div className={styles.statValue}>{users.length}</div>
-                        <div className={styles.statLabel}>Total User</div>
-                    </div>
-                </div>
-                <div className={styles.statCard}>
-                    <div className={clsx(styles.statIcon, styles.statIconGreen)}>
-                        <UserCheck size={24} />
-                    </div>
-                    <div className={styles.statContent}>
-                        <div className={styles.statValue}>{users.filter(u => u.isActive).length}</div>
-                        <div className={styles.statLabel}>User Aktif</div>
-                    </div>
-                </div>
-                <div className={styles.statCard}>
-                    <div className={clsx(styles.statIcon, styles.statIconOrange)}>
-                        <UserX size={24} />
-                    </div>
-                    <div className={styles.statContent}>
-                        <div className={styles.statValue}>{users.filter(u => !u.isActive).length}</div>
-                        <div className={styles.statLabel}>User Nonaktif</div>
-                    </div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                    <CardContent className="p-4 flex items-center gap-4">
+                        <div className="p-3 rounded-full bg-blue-100 text-blue-600">
+                            <UserGroupIcon size={24} />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold">{users.length}</div>
+                            <div className="text-sm text-muted-foreground">Total User</div>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardContent className="p-4 flex items-center gap-4">
+                        <div className="p-3 rounded-full bg-green-100 text-green-600">
+                            <UserCheck01Icon size={24} />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold">{users.filter(u => u.isActive).length}</div>
+                            <div className="text-sm text-muted-foreground">User Aktif</div>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardContent className="p-4 flex items-center gap-4">
+                        <div className="p-3 rounded-full bg-orange-100 text-orange-600">
+                            <UserBlock01Icon size={24} />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold">{users.filter(u => !u.isActive).length}</div>
+                            <div className="text-sm text-muted-foreground">User Nonaktif</div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Filters */}
+            <div className="relative">
+                <Search01Icon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                    placeholder="Cari user..."
+                    value={searchQuery}
+                    onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                    className="pl-10 max-w-sm"
+                />
             </div>
 
             {/* Users Table */}
-            <div className={styles.card}>
-                <div className={styles.cardBody} style={{ padding: 0 }}>
-                    <table className={styles.table}>
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Statistik</th>
-                                <th>Dibuat</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map((user) => {
-                                const roleInfo = roleLabels[user.role];
-                                const RoleIcon = roleInfo.icon;
+            <Card>
+                <CardContent className="p-0">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>User</TableHead>
+                                <TableHead>Role</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Statistik</TableHead>
+                                <TableHead>Dibuat</TableHead>
+                                <TableHead className="text-right">Aksi</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {paginatedUsers.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                                        Tidak ada user yang ditemukan
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                paginatedUsers.map((user) => {
+                                    const roleInfo = roleLabels[user.role];
+                                    const RoleIcon = roleInfo.icon;
 
-                                return (
-                                    <tr key={user.id}>
-                                        <td>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                                <div style={{
-                                                    width: 40,
-                                                    height: 40,
-                                                    borderRadius: 12,
-                                                    background: 'white',
-                                                    border: '1px solid rgba(128, 0, 0, 0.1)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    color: 'var(--primary)',
-                                                    fontWeight: 800,
-                                                    boxShadow: 'var(--glass-shadow)'
-                                                }}>
-                                                    {user.name.charAt(0).toUpperCase()}
+                                    return (
+                                        <TableRow key={user.id}>
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-background border flex items-center justify-center text-primary font-bold shadow-sm">
+                                                        {user.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-semibold">{user.name}</div>
+                                                        <div className="text-xs text-muted-foreground">@{user.username}</div>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <strong>{user.name}</strong>
-                                                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>@{user.username}</div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold", roleInfo.color)}>
+                                                    <RoleIcon size={12} />
+                                                    {roleInfo.label}
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span className={clsx(styles.badge, styles[roleInfo.color])}>
-                                                <RoleIcon size={12} />
-                                                {roleInfo.label}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {user.isActive ? (
-                                                <span className={clsx(styles.badge, styles.badgeSuccess)}>Aktif</span>
-                                            ) : (
-                                                <span className={clsx(styles.badge, styles.badgeWarning)}>Nonaktif</span>
-                                            )}
-                                        </td>
-                                        <td style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                                            {user._count?.createdSessions || 0} sesi • {user._count?.scannedItems || 0} scan
-                                        </td>
-                                        <td>{new Date(user.createdAt).toLocaleDateString('id-ID')}</td>
-                                        <td>
-                                            <div style={{ display: 'flex', gap: 8 }}>
-                                                <button
-                                                    className={clsx(styles.button, styles.buttonSecondary, styles.buttonSmall)}
-                                                    onClick={() => openEditModal(user)}
-                                                >
-                                                    <Edit2 size={14} />
-                                                </button>
-                                                <button
-                                                    className={clsx(styles.button, styles.buttonSecondary, styles.buttonSmall)}
-                                                    onClick={() => toggleUserStatus(user)}
-                                                    title={user.isActive ? 'Nonaktifkan' : 'Aktifkan'}
-                                                >
-                                                    {user.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className={cn(
+                                                    "inline-flex rounded-full px-2 py-0.5 text-xs font-semibold",
+                                                    user.isActive ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                                                )}>
+                                                    {user.isActive ? 'Aktif' : 'Nonaktif'}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">
+                                                {user._count?.createdSessions || 0} sesi • {user._count?.scannedItems || 0} scan
+                                            </TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">
+                                                {new Date(user.createdAt).toLocaleDateString('id-ID')}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8"
+                                                        onClick={() => openEditModal(user)}
+                                                    >
+                                                        <PencilEdit02Icon size={16} />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-destructive hover:text-destructive"
+                                                        onClick={() => toggleUserStatus(user)}
+                                                        title={user.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                                                    >
+                                                        {user.isActive ? <UserBlock01Icon size={16} /> : <UserCheck01Icon size={16} />}
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
 
-            {/* Modal */}
-            <Modal
-                isOpen={showModal}
-                onClose={() => setShowModal(false)}
-                title={editingUser ? 'Edit User' : 'Tambah User Baru'}
-                maxWidth={480}
-            >
-                <form onSubmit={handleSubmit}>
-                    {!editingUser && (
-                        <div className={styles.formGroup}>
-                            <label>Username</label>
-                            <input
-                                type="text"
-                                className={styles.formInput}
-                                placeholder="username_baru"
-                                value={formData.username}
-                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+            {/* Pagination Component */}
+            {totalPages > 1 && (
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                href="#"
+                                onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(1, p - 1)); }}
+                                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                        </PaginationItem>
+
+                        <PaginationItem>
+                            <PaginationLink href="#" isActive onClick={(e) => e.preventDefault()}>
+                                {currentPage}
+                            </PaginationLink>
+                        </PaginationItem>
+
+                        {totalPages > 1 && (
+                            <PaginationItem>
+                                <span className="text-muted-foreground text-sm mx-2">
+                                    dari {totalPages}
+                                </span>
+                            </PaginationItem>
+                        )}
+
+                        <PaginationItem>
+                            <PaginationNext
+                                href="#"
+                                onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(totalPages, p + 1)); }}
+                                className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            )}
+
+            {/* Dialog */}
+            <Dialog open={showModal} onOpenChange={setShowModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{editingUser ? 'Edit User' : 'Tambah User Baru'}</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {!editingUser && (
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium">Username</label>
+                                <Input
+                                    placeholder="username_baru"
+                                    value={formData.username}
+                                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                    required
+                                />
+                            </div>
+                        )}
+
+                        <div className="grid gap-2">
+                            <label className="text-sm font-medium">Nama Lengkap</label>
+                            <Input
+                                placeholder="Nama lengkap"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 required
                             />
                         </div>
-                    )}
 
-                    <div className={styles.formGroup}>
-                        <label>Nama Lengkap</label>
-                        <input
-                            type="text"
-                            className={styles.formInput}
-                            placeholder="Nama lengkap"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            required
-                        />
-                    </div>
+                        <div className="grid gap-2">
+                            <label className="text-sm font-medium">Password {editingUser && '(kosongkan jika tidak diubah)'}</label>
+                            <Input
+                                type="password"
+                                placeholder={editingUser ? '••••••••' : 'Password baru'}
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                required={!editingUser}
+                            />
+                        </div>
 
-                    <div className={styles.formGroup}>
-                        <label>Password {editingUser && '(kosongkan jika tidak diubah)'}</label>
-                        <input
-                            type="password"
-                            className={styles.formInput}
-                            placeholder={editingUser ? '••••••••' : 'Password baru'}
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            required={!editingUser}
-                        />
-                    </div>
+                        <div className="grid gap-2">
+                            <label className="text-sm font-medium">Role</label>
+                            <select
+                                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                value={formData.role}
+                                onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                            >
+                                <option value="ADMIN">Admin (Back Office)</option>
+                                <option value="WAREHOUSE">Warehouse Staff (Field Operator)</option>
+                                <option value="SUPER_ADMIN">Super Admin (Full Access)</option>
+                            </select>
+                        </div>
 
-                    <div className={styles.formGroup}>
-                        <label>Role</label>
-                        <select
-                            className={styles.formInput}
-                            value={formData.role}
-                            onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
-                        >
-                            <option value="ADMIN">Admin (Back Office)</option>
-                            <option value="WAREHOUSE">Warehouse Staff (Field Operator)</option>
-                            <option value="SUPER_ADMIN">Super Admin (Full Access)</option>
-                        </select>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-                        <button
-                            type="button"
-                            className={clsx(styles.button, styles.buttonSecondary)}
-                            onClick={() => setShowModal(false)}
-                            style={{ flex: 1 }}
-                        >
-                            Batal
-                        </button>
-                        <button
-                            type="submit"
-                            className={clsx(styles.button, styles.buttonPrimary)}
-                            disabled={saving}
-                            style={{ flex: 1 }}
-                        >
-                            {saving ? (
-                                <>
-                                    <Loader2 size={18} className={styles.spin} />
-                                    Menyimpan...
-                                </>
-                            ) : (
-                                'Simpan'
-                            )}
-                        </button>
-                    </div>
-                </form>
-            </Modal>
-        </>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
+                                Batal
+                            </Button>
+                            <Button type="submit" disabled={saving}>
+                                {saving && <Loading03Icon size={16} className="animate-spin mr-2" />}
+                                Simpan
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        </div>
     );
 }

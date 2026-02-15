@@ -5,22 +5,27 @@ import React, { useState, useEffect, useRef, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import styles from '../../warehouse.module.css';
-import { clsx } from 'clsx';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 import {
-    ArrowLeft,
-    CheckCircle,
-    AlertTriangle,
-    Loader2,
-    Keyboard,
-    Camera,
-    Upload,
-    RotateCcw,
-    X,
-    PackageCheck,
-    ScanLine,
-    Info,
-    History
-} from 'lucide-react';
+    ArrowLeft01Icon,
+    CheckmarkCircle02Icon,
+    Alert02Icon,
+    Loading03Icon,
+    KeyboardIcon,
+    Camera01Icon,
+    Upload01Icon,
+    RefreshIcon,
+    Cancel01Icon,
+    PackageIcon,
+    ScanIcon,
+    InformationCircleIcon,
+    Time01Icon
+} from 'hugeicons-react';
 
 interface SessionDetail {
     id: string;
@@ -58,6 +63,7 @@ const BARCODE_FORMATS = [
 ];
 
 export default function WarehouseScanPage({ params }: { params: Promise<{ id: string }> }) {
+    const { user: authUser } = useAuth();
     const resolvedParams = use(params);
     const router = useRouter();
     const inputRef = useRef<HTMLInputElement>(null);
@@ -138,6 +144,7 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
             }
         } catch (error) {
             console.error('Failed to fetch session:', error);
+            toast.error("Gagal memuat sesi");
         } finally {
             if (isMountedRef.current) setLoading(false);
         }
@@ -194,12 +201,12 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
             console.error('Camera error:', err);
             if (isMountedRef.current) {
                 const error = err as Error & { name?: string };
-                setCameraError(
-                    error.name === 'NotAllowedError'
-                        ? 'Akses kamera ditolak. Izinkan kamera di browser Anda.'
-                        : `Gagal memulai kamera: ${error.message || 'Unknown error'}`
-                );
+                const msg = error.name === 'NotAllowedError'
+                    ? 'Akses kamera ditolak. Izinkan kamera di browser Anda.'
+                    : `Gagal memulai kamera: ${error.message || 'Unknown error'}`;
+                setCameraError(msg);
                 setCameraActive(false);
+                toast.error(msg);
             }
         }
     };
@@ -297,6 +304,7 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
             }
         } catch (error) {
             showFeedback('INVALID', 'Koneksi gagal', cleanId);
+            toast.error("Koneksi gagal");
         } finally {
             setScanning(false);
             setInputValue('');
@@ -306,8 +314,8 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
     if (loading) {
         return (
             <div className={styles.centerScreen}>
-                <Loader2 size={48} className={styles.spin} style={{ color: 'var(--primary)' }} />
-                <p style={{ fontWeight: 600, color: 'var(--text-dim)' }}>Menyiapkan Sesi Scan...</p>
+                <Loading03Icon size={48} className={styles.spin} style={{ color: 'var(--primary)' }} />
+                <p className="mt-4 font-semibold text-muted-foreground">Menyiapkan Sesi Scan...</p>
             </div>
         );
     }
@@ -315,14 +323,14 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
     if (!session) {
         return (
             <div className={styles.centerScreen}>
-                <div style={{ background: 'rgba(239, 68, 68, 0.05)', padding: 32, borderRadius: 40, marginBottom: 16 }}>
-                    <AlertTriangle size={64} style={{ color: 'var(--error)' }} />
+                <div className="bg-destructive/10 p-8 rounded-full mb-4">
+                    <Alert02Icon size={64} className="text-destructive" />
                 </div>
-                <h2>Sesi Tidak Ditemukan</h2>
-                <p>Mungkin sesi telah dihapus atau dinonaktifkan.</p>
-                <button onClick={() => router.push('/warehouse')} className={styles.btn} style={{ marginTop: 20 }}>
-                    <ArrowLeft size={18} /> Kembali ke Beranda
-                </button>
+                <h2 className="text-2xl font-bold mb-2">Sesi Tidak Ditemukan</h2>
+                <p className="text-muted-foreground mb-6">Mungkin sesi telah dihapus atau dinonaktifkan.</p>
+                <Button onClick={() => router.push('/warehouse')} variant="default">
+                    <ArrowLeft01Icon size={18} className="mr-2" /> Kembali ke Beranda
+                </Button>
             </div>
         );
     }
@@ -336,19 +344,19 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
 
             {/* Feedback Overlay */}
             {feedback && (
-                <div className={`${styles.feedbackOverlay} ${styles[`overlay${feedback}`]}`}>
+                <div className={cn(styles.feedbackOverlay, styles[`overlay${feedback}`])}>
                     <div className={styles.overlayIcon}>
                         {feedback === 'SUCCESS' ? (
-                            <div style={{ background: 'rgba(255, 255, 255, 0.2)', padding: 30, borderRadius: '50%' }}>
-                                <CheckCircle size={100} strokeWidth={2.5} />
+                            <div className="bg-white/20 p-8 rounded-full">
+                                <CheckmarkCircle02Icon size={100} strokeWidth={2.5} />
                             </div>
                         ) : feedback === 'DUPLICATE' ? (
-                            <div style={{ background: 'rgba(255, 255, 255, 0.2)', padding: 30, borderRadius: '50%' }}>
-                                <Info size={100} strokeWidth={2.5} />
+                            <div className="bg-white/20 p-8 rounded-full">
+                                <InformationCircleIcon size={100} strokeWidth={2.5} />
                             </div>
                         ) : (
-                            <div style={{ background: 'rgba(255, 255, 255, 0.2)', padding: 30, borderRadius: '50%' }}>
-                                <AlertTriangle size={100} strokeWidth={2.5} />
+                            <div className="bg-white/20 p-8 rounded-full">
+                                <Alert02Icon size={100} strokeWidth={2.5} />
                             </div>
                         )}
                     </div>
@@ -356,61 +364,75 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
                         {feedback === 'SUCCESS' ? 'Scan Berhasil' : feedback === 'DUPLICATE' ? 'Sudah Terdata' : 'Gagal / Invalid'}
                     </span>
                     <div className={styles.overlayId}>{feedbackTrackingId || '---'}</div>
-                    <p style={{ marginTop: 24, fontSize: '1.1rem', fontWeight: 600, opacity: 0.9 }}>{feedbackMessage}</p>
+                    <p className="mt-6 text-xl font-semibold opacity-90">{feedbackMessage}</p>
                 </div>
             )}
 
             {/* Header */}
             <header className={styles.scanHeader}>
-                <button onClick={() => router.push('/warehouse')} className={styles.backBtn}>
-                    <ArrowLeft size={24} />
-                </button>
+                <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="icon" onClick={() => router.push('/warehouse')} className="text-primary hover:bg-primary/5">
+                        <ArrowLeft01Icon size={24} />
+                    </Button>
+                    {authUser?.role === 'SUPER_ADMIN' && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => router.push('/superadmin')}
+                            className="bg-primary/5 text-primary hover:bg-primary/10 rounded-full h-10 w-10 border border-primary/10"
+                            title="Ke Dashboard Utama"
+                        >
+                            <ArrowLeft01Icon size={18} />
+                        </Button>
+                    )}
+                </div>
                 <div className={styles.headerInfo}>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sesi Aktif</div>
-                    <h1>{session.name}</h1>
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Sesi Aktif</div>
+                    <h1 className="text-xl font-bold text-primary tracking-tight">{session.name}</h1>
                 </div>
             </header>
 
             {/* Stats Dashboard */}
-            <div className={styles.statsBar}>
-                <div className={styles.statItem}>
-                    <span className={styles.statNum}>{session.stats.scannedCount}</span>
-                    <span className={styles.statLabel}>Terscan</span>
-                </div>
-                <div className={styles.statDivider}>/</div>
-                <div className={styles.statItem}>
-                    <span className={styles.statNum}>{session.stats.total}</span>
-                    <span className={styles.statLabel}>Target</span>
-                </div>
-                <div className={styles.progressWrap}>
-                    <div className={styles.progressTrack}>
-                        <div className={styles.progressFill} style={{ width: `${progress}%` }} />
+            <Card className="mx-4 mb-4 border-none shadow-md bg-white/90 backdrop-blur-sm">
+                <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex flex-col items-center">
+                        <span className="text-2xl font-bold text-primary">{session.stats.scannedCount}</span>
+                        <span className="text-xs font-medium text-muted-foreground uppercase">Terscan</span>
                     </div>
-                    <span>{progress}%</span>
-                </div>
-            </div>
+                    <div className="h-8 w-[1px] bg-border" />
+                    <div className="flex flex-col items-center">
+                        <span className="text-2xl font-bold text-muted-foreground">{session.stats.total}</span>
+                        <span className="text-xs font-medium text-muted-foreground uppercase">Target</span>
+                    </div>
+                    <div className="flex flex-col items-center" style={{ width: 60 }}>
+                        <div className="relative w-full text-center">
+                            <span className="text-lg font-bold text-primary">{progress}%</span>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Tab Navigation */}
             <div className={styles.tabs}>
                 <button
-                    className={`${styles.tab} ${scanMode === 'manual' ? styles.tabActive : ''}`}
+                    className={cn(styles.tab, scanMode === 'manual' && styles.tabActive)}
                     onClick={() => setScanMode('manual')}
                 >
-                    <Keyboard size={24} />
+                    <KeyboardIcon size={24} className={scanMode === 'manual' ? "text-white" : "text-primary"} />
                     <span>Keyboard</span>
                 </button>
                 <button
-                    className={`${styles.tab} ${scanMode === 'camera' ? styles.tabActive : ''}`}
+                    className={cn(styles.tab, scanMode === 'camera' && styles.tabActive)}
                     onClick={() => setScanMode('camera')}
                 >
-                    <Camera size={24} />
+                    <Camera01Icon size={24} className={scanMode === 'camera' ? "text-white" : "text-primary"} />
                     <span>Kamera</span>
                 </button>
                 <button
-                    className={`${styles.tab} ${scanMode === 'upload' ? styles.tabActive : ''}`}
+                    className={cn(styles.tab, scanMode === 'upload' && styles.tabActive)}
                     onClick={() => setScanMode('upload')}
                 >
-                    <Upload size={24} />
+                    <Upload01Icon size={24} className={scanMode === 'upload' ? "text-white" : "text-primary"} />
                     <span>File</span>
                 </button>
             </div>
@@ -420,15 +442,15 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
                 {/* Manual Mode */}
                 {scanMode === 'manual' && (
                     <div className={styles.manualMode}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                            <ScanLine size={18} style={{ color: 'var(--primary)' }} />
-                            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)' }}>Input Manual</span>
+                        <div className="flex items-center gap-2 mb-4 text-primary">
+                            <ScanIcon size={20} />
+                            <span className="font-bold">Input Manual</span>
                         </div>
-                        <div className={styles.inputGroup}>
-                            <input
+                        <div className="flex gap-2">
+                            <Input
                                 ref={inputRef}
                                 type="text"
-                                className={styles.input}
+                                className="h-12 text-lg"
                                 placeholder="Scan atau ketik nomor resi..."
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
@@ -436,15 +458,15 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
                                 autoComplete="off"
                                 disabled={scanning}
                             />
-                            <button
-                                className={styles.submitBtn}
+                            <Button
+                                className="h-12 w-20"
                                 onClick={() => handleScan(inputValue)}
                                 disabled={!inputValue.trim() || scanning}
                             >
-                                {scanning ? <Loader2 size={24} className={styles.spin} /> : 'OK'}
-                            </button>
+                                {scanning ? <Loading03Icon size={24} className="animate-spin" /> : 'OK'}
+                            </Button>
                         </div>
-                        <p className={styles.hint}>Kompatibel dengan scanner barcode fisik (Bluetooth/USB)</p>
+                        <p className="text-xs text-muted-foreground mt-4 text-center">Kompatibel dengan scanner barcode fisik (Bluetooth/USB)</p>
                     </div>
                 )}
 
@@ -452,39 +474,36 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
                 {scanMode === 'camera' && (
                     <div className={styles.cameraMode}>
                         {cameraError ? (
-                            <div className={styles.errorBox}>
-                                <div style={{ background: 'rgba(239, 68, 68, 0.05)', padding: 20, borderRadius: '50%' }}>
-                                    <AlertTriangle size={40} />
+                            <div className="flex flex-col items-center justify-center p-8 text-center h-full">
+                                <div className="bg-destructive/10 p-4 rounded-full mb-4">
+                                    <Alert02Icon size={32} className="text-destructive" />
                                 </div>
-                                <p style={{ fontWeight: 600 }}>{cameraError}</p>
-                                <button
+                                <p className="font-medium mb-4">{cameraError}</p>
+                                <Button
+                                    variant="outline"
                                     onClick={() => { setCameraReady(false); setTimeout(() => setCameraReady(true), 100); }}
-                                    className={styles.btn}
-                                    style={{ padding: '12px 24px', fontSize: '0.9rem' }}
                                 >
-                                    <RotateCcw size={16} /> Coba Inisialisasi Ulang
-                                </button>
+                                    <RefreshIcon size={16} className="mr-2" /> Coba Lagi
+                                </Button>
                             </div>
                         ) : (
                             <div className={styles.scannerWrapper}>
                                 <div className={styles.cameraView}>
                                     <div ref={cameraRef} id="camera-view" className={styles.reader}></div>
-
-                                    {/* QRIS Style Overlay */}
                                     <div className={styles.cameraOverlay}>
                                         <div className={styles.scanRegion}>
-                                            <div className={clsx(styles.corner, styles.topLeft)}></div>
-                                            <div className={clsx(styles.corner, styles.topRight)}></div>
-                                            <div className={clsx(styles.corner, styles.bottomLeft)}></div>
-                                            <div className={clsx(styles.corner, styles.bottomRight)}></div>
+                                            <div className={cn(styles.corner, styles.topLeft)}></div>
+                                            <div className={cn(styles.corner, styles.topRight)}></div>
+                                            <div className={cn(styles.corner, styles.bottomLeft)}></div>
+                                            <div className={cn(styles.corner, styles.bottomRight)}></div>
                                             <div className={styles.scanLine}></div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16 }}>
-                                    <div className={clsx(styles.statusDot, cameraActive && styles.statusDotActive)}></div>
-                                    <p className={styles.hint} style={{ margin: 0 }}>
+                                <div className="flex items-center justify-center gap-2 mt-4">
+                                    <div className={cn(styles.statusDot, cameraActive && styles.statusDotActive)}></div>
+                                    <p className="text-sm text-muted-foreground">
                                         {cameraActive ? 'Kamera aktif - Siap memindai' : 'Sedang memuat kamera...'}
                                     </p>
                                 </div>
@@ -508,19 +527,19 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
                         />
                         <label htmlFor="file-upload" className={styles.uploadBox}>
                             {scanning ? (
-                                <Loader2 size={64} className={styles.spin} style={{ color: 'var(--primary)' }} />
+                                <Loading03Icon size={64} className="animate-spin text-primary" />
                             ) : (
                                 <>
-                                    <div style={{ background: 'rgba(128, 0, 0, 0.05)', padding: 30, borderRadius: '50%' }}>
-                                        <PackageCheck size={64} style={{ color: 'var(--primary)' }} />
+                                    <div className="bg-primary/5 p-8 rounded-full mb-4">
+                                        <PackageIcon size={64} className="text-primary" />
                                     </div>
-                                    <div style={{ textAlign: 'center' }}>
-                                        <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 4 }}>Ambil Foto Barcode</div>
-                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-dim)', fontWeight: 500 }}>Sistem akan mendeteksi resi dari gambar</div>
+                                    <div className="text-center mb-6">
+                                        <div className="text-lg font-bold mb-1">Ambil Foto Barcode</div>
+                                        <div className="text-sm text-muted-foreground">Sistem akan mendeteksi resi dari gambar</div>
                                     </div>
-                                    <div className={styles.btn} style={{ width: '100%', maxWidth: 240 }}>
-                                        <Camera size={20} /> Pilih Foto
-                                    </div>
+                                    <Button className="w-full max-w-xs pointer-events-none">
+                                        <Camera01Icon size={20} className="mr-2" /> Pilih Foto
+                                    </Button>
                                 </>
                             )}
                         </label>
@@ -531,15 +550,15 @@ export default function WarehouseScanPage({ params }: { params: Promise<{ id: st
             {/* History Section */}
             {recentScans.length > 0 && (
                 <div className={styles.recentSection}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                        <History size={16} style={{ color: 'var(--text-dim)' }} />
-                        <h3>Riwayat Scan Terbaru</h3>
+                    <div className="flex items-center gap-2 mb-4 text-muted-foreground">
+                        <Time01Icon size={16} />
+                        <h3 className="text-sm font-semibold uppercase tracking-wider">Riwayat Scan Terbaru</h3>
                     </div>
                     <div className={styles.recentList}>
                         {recentScans.map(scan => (
                             <div key={scan.id} className={styles.recentItem}>
-                                <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: 8, borderRadius: 10 }}>
-                                    <CheckCircle size={18} style={{ color: 'var(--success)' }} />
+                                <div className="bg-success/10 p-2 rounded-lg">
+                                    <CheckmarkCircle02Icon size={18} className="text-success" />
                                 </div>
                                 <span className={styles.recentId}>{scan.trackingId}</span>
                                 <span className={styles.recentTime}>{scan.time}</span>

@@ -3,19 +3,30 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import styles from './admin.module.css';
 import {
-    FolderOpen,
-    Package,
-    CheckCircle,
-    AlertTriangle,
-    Plus,
-    ChevronRight,
-    Loader2
-} from 'lucide-react';
-import { clsx } from 'clsx';
+    FolderOpenIcon,
+    PackageIcon,
+    CheckmarkCircle01Icon,
+    Alert01Icon,
+    Add01Icon,
+    ArrowRight01Icon,
+    ArrowLeft01Icon,
+    Loading03Icon
+} from 'hugeicons-react';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 import type { SessionListItem } from '@/types/session';
 import { getProgress } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 
 interface SessionStats {
     totalSessions: number;
@@ -25,6 +36,7 @@ interface SessionStats {
 }
 
 export default function AdminDashboard() {
+    const { user: authUser } = useAuth();
     const [stats, setStats] = useState<SessionStats>({
         totalSessions: 0,
         totalItems: 0,
@@ -69,142 +81,149 @@ export default function AdminDashboard() {
         }
     };
 
-    // getProgress imported from lib/utils
-
     if (loading) {
         return (
-            <div className={styles.loading}>
-                <Loader2 size={32} className={styles.spin} />
-                <p style={{ marginTop: 16 }}>Memuat dashboard...</p>
+            <div className="flex flex-col items-center justify-center h-[50vh]">
+                <Loading03Icon size={48} className="animate-spin text-primary" />
+                <p className="mt-4 text-muted-foreground">Memuat dashboard...</p>
             </div>
         );
     }
 
     return (
-        <>
-            <header className={styles.header}>
-                <h1 className={styles.pageTitle}>Dashboard</h1>
-                <p className={styles.pageSubtitle}>Overview rekonsiliasi logistik</p>
+        <div className="space-y-8">
+            <header className="flex items-center gap-4">
+                {authUser?.role === 'SUPER_ADMIN' && (
+                    <Link href="/superadmin">
+                        <Button variant="outline" size="icon" className="rounded-full h-10 w-10">
+                            <ArrowLeft01Icon size={18} />
+                        </Button>
+                    </Link>
+                )}
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                    <p className="text-muted-foreground">Overview rekonsiliasi logistik</p>
+                </div>
             </header>
 
             {/* Stats Grid */}
-            <div className={styles.statsGrid}>
-                <div className={styles.statCard}>
-                    <div className={clsx(styles.statIcon, styles.statIconBlue)}>
-                        <FolderOpen size={24} />
-                    </div>
-                    <div className={styles.statContent}>
-                        <div className={styles.statValue}>{stats.totalSessions}</div>
-                        <div className={styles.statLabel}>Total Sesi</div>
-                    </div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-blue-100/50 text-blue-600">
+                            <FolderOpenIcon size={24} />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold font-mono">{stats.totalSessions}</div>
+                            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Sesi</div>
+                        </div>
+                    </CardContent>
+                </Card>
 
-                <div className={styles.statCard}>
-                    <div className={clsx(styles.statIcon, styles.statIconPurple)}>
-                        <Package size={24} />
-                    </div>
-                    <div className={styles.statContent}>
-                        <div className={styles.statValue}>{stats.totalItems.toLocaleString()}</div>
-                        <div className={styles.statLabel}>Total Paket</div>
-                    </div>
-                </div>
+                <Card>
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-purple-100/50 text-purple-600">
+                            <PackageIcon size={24} />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold font-mono">{stats.totalItems.toLocaleString()}</div>
+                            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Paket</div>
+                        </div>
+                    </CardContent>
+                </Card>
 
-                <div className={styles.statCard}>
-                    <div className={clsx(styles.statIcon, styles.statIconGreen)}>
-                        <CheckCircle size={24} />
-                    </div>
-                    <div className={styles.statContent}>
-                        <div className={styles.statValue}>{stats.scannedItems.toLocaleString()}</div>
-                        <div className={styles.statLabel}>Sudah Discan</div>
-                    </div>
-                </div>
+                <Card>
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-green-100/50 text-green-600">
+                            <CheckmarkCircle01Icon size={24} />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold font-mono">{stats.scannedItems.toLocaleString()}</div>
+                            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Sudah Discan</div>
+                        </div>
+                    </CardContent>
+                </Card>
 
-                <div className={styles.statCard}>
-                    <div className={clsx(styles.statIcon, styles.statIconOrange)}>
-                        <AlertTriangle size={24} />
-                    </div>
-                    <div className={styles.statContent}>
-                        <div className={styles.statValue}>{stats.unscannedItems.toLocaleString()}</div>
-                        <div className={styles.statLabel}>Belum Discan</div>
-                    </div>
-                </div>
+                <Card>
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-orange-100/50 text-orange-600">
+                            <Alert01Icon size={24} />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold font-mono">{stats.unscannedItems.toLocaleString()}</div>
+                            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Belum Discan</div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Recent Sessions */}
-            <div className={styles.card}>
-                <div className={styles.cardHeader}>
-                    <h2 className={styles.cardTitle}>Sesi Terbaru</h2>
-                    <Link href="/admin/sessions" className={clsx(styles.button, styles.buttonPrimary)}>
-                        <Plus size={18} />
-                        Buat Sesi Baru
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-xl font-bold">Sesi Terbaru</CardTitle>
+                    <Link href="/admin/sessions">
+                        <Button size="sm">
+                            <Add01Icon size={18} className="mr-2" />
+                            Buat Sesi Baru
+                        </Button>
                     </Link>
-                </div>
-
-                <div className={styles.cardBody} style={{ padding: 0 }}>
+                </CardHeader>
+                <CardContent className="p-0">
                     {recentSessions.length === 0 ? (
-                        <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
-                            <FolderOpen size={48} style={{ marginBottom: 16, opacity: 0.5 }} />
+                        <div className="py-20 text-center text-muted-foreground">
+                            <FolderOpenIcon size={48} className="mx-auto mb-4 opacity-20" />
                             <p>Belum ada sesi scanning</p>
-                            <Link
-                                href="/admin/sessions"
-                                className={clsx(styles.button, styles.buttonPrimary)}
-                                style={{ marginTop: 16 }}
-                            >
-                                <Plus size={18} />
-                                Buat Sesi Pertama
-                            </Link>
                         </div>
                     ) : (
-                        <table className={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th>Nama Sesi</th>
-                                    <th>Total Paket</th>
-                                    <th>Progress</th>
-                                    <th>Tanggal</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Nama Sesi</TableHead>
+                                    <TableHead>Total Paket</TableHead>
+                                    <TableHead>Progress</TableHead>
+                                    <TableHead>Tanggal</TableHead>
+                                    <TableHead className="text-right"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {recentSessions.map((session) => {
                                     const total = session._count?.items || 0;
                                     const scanned = session.scannedCount || 0;
                                     const progress = getProgress(scanned, total);
 
                                     return (
-                                        <tr key={session.id}>
-                                            <td>
-                                                <strong>{session.name}</strong>
-                                            </td>
-                                            <td>{total} paket</td>
-                                            <td>
-                                                <div className={styles.progressWrapper}>
-                                                    <div className={styles.progressBar}>
+                                        <TableRow key={session.id}>
+                                            <TableCell className="font-semibold">{session.name}</TableCell>
+                                            <TableCell className="font-mono">{total} paket</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-24 h-2 bg-secondary rounded-full overflow-hidden">
                                                         <div
-                                                            className={styles.progressFill}
+                                                            className="h-full bg-primary transition-all duration-500"
                                                             style={{ width: `${progress}%` }}
                                                         />
                                                     </div>
-                                                    <span className={styles.progressText}>{progress}%</span>
+                                                    <span className="text-xs font-bold text-muted-foreground w-8">{progress}%</span>
                                                 </div>
-                                            </td>
-                                            <td>{new Date(session.createdAt).toLocaleDateString('id-ID')}</td>
-                                            <td>
-                                                <Link
-                                                    href={`/admin/sessions/${session.id}`}
-                                                    className={clsx(styles.button, styles.buttonSecondary, styles.buttonSmall)}
-                                                >
-                                                    Detail <ChevronRight size={14} />
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground font-mono">
+                                                {new Date(session.createdAt).toLocaleDateString('id-ID')}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Link href={`/admin/sessions/${session.id}`}>
+                                                    <Button variant="ghost" size="sm">
+                                                        Detail <ArrowRight01Icon size={14} className="ml-2" />
+                                                    </Button>
                                                 </Link>
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     );
                                 })}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     )}
-                </div>
-            </div>
-        </>
+                </CardContent>
+            </Card>
+        </div>
     );
 }

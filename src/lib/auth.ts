@@ -32,14 +32,7 @@ interface SessionData {
     expiresAt: number;
 }
 
-export async function createSession(userId: string, rememberMe: boolean = false): Promise<string> {
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true, username: true, name: true, role: true }
-    });
-
-    if (!user) throw new Error('User not found');
-
+export async function createSession(user: { id: string, username: string, name: string, role: string }, rememberMe: boolean = false): Promise<string> {
     const duration = rememberMe ? LONG_SESSION_DURATION : SHORT_SESSION_DURATION;
 
     const sessionData: SessionData = {
@@ -69,7 +62,9 @@ export async function setSessionCookie(sessionToken: string, rememberMe: boolean
     });
 }
 
-export async function getSession(): Promise<SessionData | null> {
+import { cache } from 'react';
+
+export const getSession = cache(async (): Promise<SessionData | null> => {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
 
@@ -97,7 +92,7 @@ export async function getSession(): Promise<SessionData | null> {
     } catch {
         return null;
     }
-}
+});
 
 export async function clearSession(): Promise<void> {
     const cookieStore = await cookies();
