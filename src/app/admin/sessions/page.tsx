@@ -14,7 +14,9 @@ import {
     FolderOpenIcon,
     Delete02Icon,
     Cancel01Icon,
-    Search01Icon
+    Search01Icon,
+    PencilEdit01Icon,
+    Alert01Icon
 } from 'hugeicons-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -69,6 +71,13 @@ export default function SessionsPage() {
     const [creating, setCreating] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Super Admin CRUD states
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+    const [editName, setEditName] = useState('');
+    const [actionLoading, setActionLoading] = useState(false);
+
     // Pagination & Search
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
@@ -122,6 +131,57 @@ export default function SessionsPage() {
             toast.error('Terjadi kesalahan pada server');
         } finally {
             setCreating(false);
+        }
+    };
+
+    const handleEditSession = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedSession || !editName.trim()) return;
+
+        setActionLoading(true);
+        try {
+            const res = await fetch(`/api/sessions/${selectedSession.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: editName }),
+            });
+
+            if (res.ok) {
+                toast.success('Nama sesi berhasil diperbarui');
+                setShowEditModal(false);
+                fetchSessions();
+            } else {
+                const err = await res.json();
+                toast.error(err.error || 'Gagal memperbarui sesi');
+            }
+        } catch (error) {
+            toast.error('Terjadi kesalahan pada server');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleDeleteSession = async () => {
+        if (!selectedSession) return;
+
+        setActionLoading(true);
+        try {
+            const res = await fetch(`/api/sessions/${selectedSession.id}`, {
+                method: 'DELETE',
+            });
+
+            if (res.ok) {
+                toast.success('Sesi berhasil dihapus');
+                setShowDeleteModal(false);
+                fetchSessions();
+            } else {
+                const err = await res.json();
+                toast.error(err.error || 'Gagal menghapus sesi');
+            }
+        } catch (error) {
+            toast.error('Terjadi kesalahan pada server');
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -205,9 +265,8 @@ export default function SessionsPage() {
                                     <TableHead>Total Paket</TableHead>
                                     <TableHead>Progress</TableHead>
                                     <TableHead>Dibuat Oleh</TableHead>
-                                    <TableHead>Tanggal</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead></TableHead>
+                                    <TableHead className="text-right">Aksi</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -251,12 +310,41 @@ export default function SessionsPage() {
                                                         <span className="inline-flex rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-700">Nonaktif</span>
                                                     )}
                                                 </TableCell>
-                                                <TableCell>
-                                                    <Link href={`/admin/sessions/${session.id}`}>
-                                                        <Button variant="ghost" size="sm" className="h-8">
-                                                            Detail <ArrowRight01Icon size={14} className="ml-2" />
-                                                        </Button>
-                                                    </Link>
+                                                <TableCell className="text-right">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <Link href={`/admin/sessions/${session.id}`}>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600">
+                                                                <ArrowRight01Icon size={16} />
+                                                            </Button>
+                                                        </Link>
+                                                        {authUser?.role === 'SUPER_ADMIN' && (
+                                                            <>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-amber-600"
+                                                                    onClick={() => {
+                                                                        setSelectedSession(session);
+                                                                        setEditName(session.name);
+                                                                        setShowEditModal(true);
+                                                                    }}
+                                                                >
+                                                                    <PencilEdit01Icon size={16} />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-red-600"
+                                                                    onClick={() => {
+                                                                        setSelectedSession(session);
+                                                                        setShowDeleteModal(true);
+                                                                    }}
+                                                                >
+                                                                    <Delete02Icon size={16} />
+                                                                </Button>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         );
@@ -365,6 +453,63 @@ export default function SessionsPage() {
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Session Modal */}
+            <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Nama Sesi</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleEditSession} className="space-y-4">
+                        <div className="grid gap-2">
+                            <label className="text-sm font-medium">Nama Sesi</label>
+                            <Input
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>
+                                Batal
+                            </Button>
+                            <Button type="submit" disabled={actionLoading || !editName.trim()}>
+                                {actionLoading ? <Loading03Icon size={16} className="animate-spin mr-2" /> : null}
+                                Simpan Perubahan
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Session Confirmation */}
+            <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-red-600">
+                            <Alert01Icon size={20} />
+                            Hapus Sesi?
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p>Apakah Anda yakin ingin menghapus sesi <strong>"{selectedSession?.name}"</strong>?</p>
+                        <p className="text-sm text-muted-foreground mt-2">Tindakan ini tidak dapat dibatalkan dan semua data paket di dalamnya akan ikut terhapus.</p>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setShowDeleteModal(false)}>
+                            Batal
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteSession}
+                            disabled={actionLoading}
+                        >
+                            {actionLoading ? <Loading03Icon size={16} className="animate-spin mr-2" /> : null}
+                            Hapus Sekarang
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>

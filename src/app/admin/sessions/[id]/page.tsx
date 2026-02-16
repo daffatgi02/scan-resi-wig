@@ -14,7 +14,9 @@ import {
     Loading03Icon,
     Refresh01Icon,
     Search01Icon,
-    Tick02Icon
+    Tick02Icon,
+    PencilEdit01Icon,
+    Delete02Icon
 } from 'hugeicons-react';
 import { cn } from '@/lib/utils';
 import * as XLSX from 'xlsx';
@@ -41,6 +43,13 @@ import {
     PaginationNext,
     PaginationPrevious
 } from '@/components/ui/pagination';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter
+} from '@/components/ui/dialog';
 
 interface SessionItem {
     id: string;
@@ -74,6 +83,18 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
     const [searchQuery, setSearchQuery] = useState('');
     const [autoRefresh, setAutoRefresh] = useState(false);
 
+    // Super Admin CRUD states
+    const [showEditItemModal, setShowEditItemModal] = useState(false);
+    const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<SessionItem | null>(null);
+    const [editItemData, setEditItemData] = useState({
+        trackingId: '',
+        recipient: '',
+        productName: '',
+        status: 'UNSCANNED'
+    });
+    const [actionLoading, setActionLoading] = useState(false);
+
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -101,6 +122,57 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
             toast.error("Gagal memuat detail sesi");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleEditItem = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedItem) return;
+
+        setActionLoading(true);
+        try {
+            const res = await fetch(`/api/session-items/${selectedItem.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editItemData),
+            });
+
+            if (res.ok) {
+                toast.success('Informasi paket berhasil diperbarui');
+                setShowEditItemModal(false);
+                fetchSession();
+            } else {
+                const err = await res.json();
+                toast.error(err.error || 'Gagal memperbarui paket');
+            }
+        } catch (error) {
+            toast.error('Terjadi kesalahan pada server');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleDeleteItem = async () => {
+        if (!selectedItem) return;
+
+        setActionLoading(true);
+        try {
+            const res = await fetch(`/api/session-items/${selectedItem.id}`, {
+                method: 'DELETE',
+            });
+
+            if (res.ok) {
+                toast.success('Paket berhasil dihapus');
+                setShowDeleteItemModal(false);
+                fetchSession();
+            } else {
+                const err = await res.json();
+                toast.error(err.error || 'Gagal menghapus paket');
+            }
+        } catch (error) {
+            toast.error('Terjadi kesalahan pada server');
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -369,6 +441,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
                                 <TableHead>Produk</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Waktu Scan</TableHead>
+                                {authUser?.role === 'SUPER_ADMIN' && <TableHead className="text-right">Aksi</TableHead>}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -401,6 +474,40 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
                                                 : '-'
                                             }
                                         </TableCell>
+                                        {authUser?.role === 'SUPER_ADMIN' && (
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-amber-600"
+                                                        onClick={() => {
+                                                            setSelectedItem(item);
+                                                            setEditItemData({
+                                                                trackingId: item.trackingId,
+                                                                recipient: item.recipient || '',
+                                                                productName: item.productName || '',
+                                                                status: item.status
+                                                            });
+                                                            setShowEditItemModal(true);
+                                                        }}
+                                                    >
+                                                        <PencilEdit01Icon size={16} />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-red-600"
+                                                        onClick={() => {
+                                                            setSelectedItem(item);
+                                                            setShowDeleteItemModal(true);
+                                                        }}
+                                                    >
+                                                        <Delete02Icon size={16} />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        )}
                                     </TableRow>
                                 ))
                             )}
@@ -443,6 +550,88 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
                     </Pagination>
                 </div>
             )}
+
+            {/* Edit Item Modal */}
+            <Dialog open={showEditItemModal} onOpenChange={setShowEditItemModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Informasi Paket</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleEditItem} className="space-y-4">
+                        <div className="grid gap-2">
+                            <label className="text-sm font-medium">Tracking ID</label>
+                            <Input
+                                value={editItemData.trackingId}
+                                onChange={(e) => setEditItemData({ ...editItemData, trackingId: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <label className="text-sm font-medium">Penerima</label>
+                            <Input
+                                value={editItemData.recipient}
+                                onChange={(e) => setEditItemData({ ...editItemData, recipient: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <label className="text-sm font-medium">Produk</label>
+                            <Input
+                                value={editItemData.productName}
+                                onChange={(e) => setEditItemData({ ...editItemData, productName: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <label className="text-sm font-medium">Status</label>
+                            <select
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                value={editItemData.status}
+                                onChange={(e) => setEditItemData({ ...editItemData, status: e.target.value })}
+                            >
+                                <option value="UNSCANNED">UNSCANNED (Tertinggal)</option>
+                                <option value="SCANNED">SCANNED (Terkirim)</option>
+                            </select>
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setShowEditItemModal(false)}>
+                                Batal
+                            </Button>
+                            <Button type="submit" disabled={actionLoading || !editItemData.trackingId}>
+                                {actionLoading ? <Loading03Icon size={16} className="animate-spin mr-2" /> : null}
+                                Simpan Perubahan
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Item Confirmation */}
+            <Dialog open={showDeleteItemModal} onOpenChange={setShowDeleteItemModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-red-600">
+                            <Alert01Icon size={20} />
+                            Hapus Paket?
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p>Apakah Anda yakin ingin menghapus paket dengan tracking ID <strong>"{selectedItem?.trackingId}"</strong>?</p>
+                        <p className="text-sm text-muted-foreground mt-2">Tindakan ini tidak dapat dibatalkan.</p>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setShowDeleteItemModal(false)}>
+                            Batal
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteItem}
+                            disabled={actionLoading}
+                        >
+                            {actionLoading ? <Loading03Icon size={16} className="animate-spin mr-2" /> : null}
+                            Hapus Sekarang
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -186,6 +186,16 @@ export class SessionService {
     }
 
     /**
+     * Update session name
+     */
+    static async updateSession(sessionId: string, name: string) {
+        return prisma.scanningSession.update({
+            where: { id: sessionId },
+            data: { name }
+        });
+    }
+
+    /**
      * Toggle session active status
      */
     static async toggleSessionActive(sessionId: string) {
@@ -252,6 +262,32 @@ export class SessionService {
 
             throw error;
         }
+    }
+
+    /**
+     * Update a session item (trackingId, recipient, productName, status)
+     */
+    static async updateSessionItem(itemId: string, data: {
+        trackingId?: string;
+        recipient?: string;
+        productName?: string;
+        status?: string;
+        scannedAt?: Date | null;
+        scannedById?: string | null;
+    }) {
+        return prisma.sessionItem.update({
+            where: { id: itemId },
+            data
+        });
+    }
+
+    /**
+     * Delete a single session item
+     */
+    static async deleteSessionItem(itemId: string) {
+        return prisma.sessionItem.delete({
+            where: { id: itemId }
+        });
     }
 
     // ========================================
