@@ -1,161 +1,91 @@
-/* src/app/globals.css */
-:root {
-  /* Brand Colors */
-  --primary: #800000;
-  /* Deep Maroon */
-  --primary-rgb: 128, 0, 0;
-  --primary-light: #a52a2a;
-  --accent: #800000;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  /* Backgrounds */
-  --bg-main: #fcfcfd;
-  --bg-dark: #f8f9fa;
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    /* Light gray/white background */
+    --foreground: 222.2 84% 4.9%;
 
-  /* Glass Effects - Liquid Glass Light */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.4);
-  --glass-stroke: rgba(128, 0, 0, 0.05);
-  --glass-shadow: 0 8px 32px 0 rgba(128, 0, 0, 0.08);
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-  /* Text */
-  --text-main: #1a1a1c;
-  --text-dim: #6e6e73;
-  --text-on-primary: #ffffff;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-  /* Semantic */
-  --success: #10b981;
-  --error: #ef4444;
-  --warning: #f59e0b;
+    --primary: 0 100% 25%;
+    /* Maroon #800000 */
+    --primary-foreground: 210 40% 98%;
 
-  /* Misc */
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-  /* Animations */
-  --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-glass: background 0.3s, backdrop-filter 0.3s, border 0.3s;
+    --accent: 0 100% 95%;
+    /* Light Maroon tint */
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 0 100% 25%;
+    /* Maroon Ring */
+
+    --radius: 0.5rem;
+
+    /* Original Variables preserved/mapped */
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.4);
+    --glass-shadow: 0 8px 32px 0 rgba(128, 0, 0, 0.08);
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 0 100% 25%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
-body {
-  background: var(--bg-dark);
-  color: var(--text-main);
-  font-family: var(--font-main);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-  letter-spacing: -0.01em;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-button {
-  cursor: pointer;
-  border: none;
-  background: none;
-  font-family: inherit;
-}
-
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #d1d1d6;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-dim);
-}
-
-.container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 32px;
-}
-
-/* Glassmorphism utility - Liquid Glass Light */
+/* Glassmorphism Utility classes */
 .glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--glass-shadow);
-  transition: var(--transition-glass);
-}
-
-.glass-hover:hover {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(128, 0, 0, 0.1);
-}
-
-.liquid {
-  position: relative;
-  overflow: hidden;
-}
-
-.liquid::after {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(var(--primary-rgb), 0.05) 0%, transparent 70%);
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  pointer-events: none;
-}
-
-.liquid:hover::after {
-  opacity: 1;
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
+  @apply bg-white/70 backdrop-blur-md border border-white/40 shadow-sm;
 }

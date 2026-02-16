@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create session
-        const sessionToken = await createSession(user.id, rememberMe);
+        const sessionToken = await createSession(user, rememberMe);
         await setSessionCookie(sessionToken, rememberMe);
 
         // Log activity

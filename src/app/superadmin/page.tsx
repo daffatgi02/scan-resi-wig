@@ -3,18 +3,30 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import styles from '../admin/admin.module.css';
 import {
-    Users,
-    FolderOpen,
-    Package,
-    Activity,
-    ChevronRight,
-    Loader2
-} from 'lucide-react';
-import { clsx } from 'clsx';
+    UserGroupIcon,
+    FolderOpenIcon,
+    PackageIcon,
+    Activity01Icon,
+    ArrowRight01Icon,
+    Loading03Icon,
+    ArrowLeft02Icon,
+    SecurityCheckIcon,
+    Settings01Icon
+} from 'hugeicons-react';
+import { cn } from '@/lib/utils';
 import type { SessionListItem } from '@/types/session';
 import type { ActivityLog } from '@/types/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 
 interface DashboardStats {
     totalUsers: number;
@@ -68,144 +80,163 @@ export default function SuperAdminDashboard() {
 
     if (loading) {
         return (
-            <div className={styles.loading}>
-                <Loader2 size={32} className={styles.spin} />
-                <p style={{ marginTop: 16 }}>Memuat dashboard...</p>
+            <div className="flex flex-col items-center justify-center h-[50vh]">
+                <Loading03Icon size={48} className="animate-spin text-primary" />
+                <p className="mt-4 text-muted-foreground">Memuat dashboard...</p>
             </div>
         );
     }
 
     return (
-        <>
-            <header className={styles.header}>
-                <h1 className={styles.pageTitle}>Dashboard Utama</h1>
-                <p className={styles.pageSubtitle}>Pusat Kontrol Sistem Pelacakan Paket</p>
+        <div className="space-y-8">
+            <header>
+                <div className="flex items-center gap-2 mb-2">
+                    <SecurityCheckIcon size={20} className="text-primary" />
+                    <span className="text-xs font-bold uppercase tracking-widest text-primary">System Overview</span>
+                </div>
+                <h1 className="text-3xl font-bold tracking-tight">Dashboard Utama</h1>
+                <p className="text-muted-foreground">Pusat Kontrol Sistem Pelacakan Paket</p>
             </header>
 
             {/* Stats Grid */}
-            <div className={styles.statsGrid}>
-                <div className={styles.statCard}>
-                    <div className={clsx(styles.statIcon, styles.statIconBlue)}>
-                        <Users size={24} />
-                    </div>
-                    <div className={styles.statContent}>
-                        <div className={styles.statValue}>{stats.totalUsers}</div>
-                        <div className={styles.statLabel}>Total User</div>
-                    </div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-blue-100/50 text-blue-600">
+                            <UserGroupIcon size={24} />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold font-mono">{stats.totalUsers}</div>
+                            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total User</div>
+                        </div>
+                    </CardContent>
+                </Card>
 
-                <div className={styles.statCard}>
-                    <div className={clsx(styles.statIcon, styles.statIconPurple)}>
-                        <FolderOpen size={24} />
-                    </div>
-                    <div className={styles.statContent}>
-                        <div className={styles.statValue}>{stats.totalSessions}</div>
-                        <div className={styles.statLabel}>Total Sesi</div>
-                    </div>
-                </div>
+                <Card>
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-purple-100/50 text-purple-600">
+                            <FolderOpenIcon size={24} />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold font-mono">{stats.totalSessions}</div>
+                            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Sesi</div>
+                        </div>
+                    </CardContent>
+                </Card>
 
-                <div className={styles.statCard}>
-                    <div className={clsx(styles.statIcon, styles.statIconGreen)}>
-                        <Package size={24} />
-                    </div>
-                    <div className={styles.statContent}>
-                        <div className={styles.statValue}>{stats.totalPackages.toLocaleString()}</div>
-                        <div className={styles.statLabel}>Total Paket</div>
-                    </div>
-                </div>
+                <Card>
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-green-100/50 text-green-600">
+                            <PackageIcon size={24} />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold font-mono">{stats.totalPackages.toLocaleString()}</div>
+                            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Paket</div>
+                        </div>
+                    </CardContent>
+                </Card>
 
-                <div className={styles.statCard}>
-                    <div className={clsx(styles.statIcon, styles.statIconOrange)}>
-                        <Activity size={24} />
-                    </div>
-                    <div className={styles.statContent}>
-                        <div className={styles.statValue}>{stats.recentLogs.length}</div>
-                        <div className={styles.statLabel}>Aktivitas Terbaru</div>
-                    </div>
-                </div>
+                <Card>
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-orange-100/50 text-orange-600">
+                            <Activity01Icon size={24} />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold font-mono">{stats.recentLogs.length}</div>
+                            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Aktivitas Terbaru</div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Quick Actions */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, marginBottom: 32 }}>
-                <Link href="/superadmin/users" className={styles.card} style={{ textDecoration: 'none' }}>
-                    <div className={styles.cardBody} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                        <div className={clsx(styles.statIcon, styles.statIconBlue)}>
-                            <Users size={24} />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <h3 style={{ color: '#1e293b', fontWeight: 700, marginBottom: 4 }}>User Management</h3>
-                            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>Tambah, edit, atau nonaktifkan user</p>
-                        </div>
-                        <ChevronRight size={20} style={{ color: '#94a3b8' }} />
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Link href="/superadmin/users" className="block transform transition-all hover:scale-[1.01] active:scale-[0.99]">
+                    <Card className="hover:border-primary/50 transition-colors">
+                        <CardContent className="p-6 flex items-center gap-4">
+                            <div className="p-4 rounded-2xl bg-blue-50 text-blue-600">
+                                <UserGroupIcon size={32} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold text-lg">User Management</h3>
+                                <p className="text-sm text-muted-foreground">Tambah, edit, atau nonaktifkan user sistem</p>
+                            </div>
+                            <ArrowRight01Icon size={24} className="text-muted-foreground/30" />
+                        </CardContent>
+                    </Card>
                 </Link>
 
-                <Link href="/superadmin/logs" className={styles.card} style={{ textDecoration: 'none' }}>
-                    <div className={styles.cardBody} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                        <div className={clsx(styles.statIcon, styles.statIconOrange)}>
-                            <Activity size={24} />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <h3 style={{ color: '#1e293b', fontWeight: 700, marginBottom: 4 }}>Activity Logs</h3>
-                            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>Lihat semua aktivitas sistem</p>
-                        </div>
-                        <ChevronRight size={20} style={{ color: '#94a3b8' }} />
-                    </div>
+                <Link href="/superadmin/logs" className="block transform transition-all hover:scale-[1.01] active:scale-[0.99]">
+                    <Card className="hover:border-orange-500/50 transition-colors">
+                        <CardContent className="p-6 flex items-center gap-4">
+                            <div className="p-4 rounded-2xl bg-orange-50 text-orange-600">
+                                <Activity01Icon size={32} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold text-lg">Activity Logs</h3>
+                                <p className="text-sm text-muted-foreground">Pantau semua aktivitas dan jejak audit sistem</p>
+                            </div>
+                            <ArrowRight01Icon size={24} className="text-muted-foreground/30" />
+                        </CardContent>
+                    </Card>
                 </Link>
             </div>
 
             {/* Recent Activity */}
-            <div className={styles.card}>
-                <div className={styles.cardHeader}>
-                    <h2 className={styles.cardTitle}>Aktivitas Terbaru</h2>
-                    <Link href="/superadmin/logs" className={clsx(styles.button, styles.buttonSecondary, styles.buttonSmall)}>
-                        Lihat Semua
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-xl font-bold">Aktivitas Terbaru</CardTitle>
+                    <Link href="/superadmin/logs">
+                        <Button variant="outline" size="sm">
+                            Lihat Semua
+                        </Button>
                     </Link>
-                </div>
-
-                <div className={styles.cardBody} style={{ padding: 0 }}>
+                </CardHeader>
+                <CardContent className="p-0">
                     {stats.recentLogs.length === 0 ? (
-                        <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
+                        <div className="py-20 text-center text-muted-foreground">
                             Belum ada aktivitas
                         </div>
                     ) : (
-                        <table className={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th>Waktu</th>
-                                    <th>User</th>
-                                    <th>Aksi</th>
-                                    <th>IP Address</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Waktu</TableHead>
+                                    <TableHead>User</TableHead>
+                                    <TableHead>Aksi</TableHead>
+                                    <TableHead>IP Address</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {stats.recentLogs.map((log) => (
-                                    <tr key={log.id}>
-                                        <td style={{ whiteSpace: 'nowrap' }}>
+                                    <TableRow key={log.id}>
+                                        <TableCell className="font-mono text-xs">
                                             {new Date(log.createdAt).toLocaleString('id-ID', {
                                                 dateStyle: 'short',
                                                 timeStyle: 'short'
                                             })}
-                                        </td>
-                                        <td>
-                                            <strong>{log.user?.name}</strong>
-                                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>@{log.user?.username}</div>
-                                        </td>
-                                        <td>
-                                            <span className={clsx(styles.badge, styles.badgeInfo)}>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span className="font-semibold">{log.user?.name}</span>
+                                                <span className="text-[10px] text-muted-foreground font-mono">@{log.user?.username}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-secondary-foreground uppercase tracking-tight">
                                                 {log.action}
                                             </span>
-                                        </td>
-                                        <td style={{ color: '#64748b', fontSize: '0.85rem' }}>
+                                        </TableCell>
+                                        <TableCell className="text-xs text-muted-foreground font-mono">
                                             {log.ipAddress || '-'}
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     )}
-                </div>
-            </div>
-        </>
+                </CardContent>
+            </Card>
+        </div>
     );
 }
